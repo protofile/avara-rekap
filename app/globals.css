@@ -3,25 +3,76 @@
 @tailwind utilities;
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --background: #f8fafc;
+  --foreground: #0f172a;
 }
 
 body {
   color: var(--foreground);
   background: var(--background);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Print Styles for Identical Form & PDF Output */
+@media screen {
+  #print-section {
+    position: fixed !important;
+    left: -9999px !important;
+    top: 0 !important;
+    width: 794px !important;
+    pointer-events: none !important;
+    z-index: -9999 !important;
+  }
+}
+
+@media print {
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  /* Hide regular UI elements */
+  body > *:not(#print-section) {
+    display: none !important;
+  }
+
+  /* Show only the printable document */
+  #print-section {
+    display: block !important;
+    position: static !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 auto !important;
+    padding: 12mm 15mm !important;
+    opacity: 1 !important;
+    visibility: visible !important;
+    background: #ffffff !important;
+  }
+
+  @page {
+    size: A4 portrait;
+    margin: 0;
   }
 }
