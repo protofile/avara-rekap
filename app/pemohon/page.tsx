@@ -21,6 +21,9 @@ import {
   ArrowLeft,
   ExternalLink,
 } from "lucide-react";
+import { compressImage, uploadPhoto } from "@/lib/imageCompress";
+
+const MAX_PHOTOS = 10;
 
 interface KategoriItem {
   id: number;
@@ -74,6 +77,10 @@ export default function PemohonDashboard() {
   const [deskripsi, setDeskripsi] = useState("");
   const [images, setImages] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
+  const [processingImages, setProcessingImages] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState("");
+  // Already-uploaded photos (preview data URL -> server URL), so a retry doesn't upload them twice.
+  const uploadedRef = useRef<Map<string, string>>(new Map());
   const [errorMessage, setErrorMessage] = useState("");
 
   // Success view state
@@ -172,20 +179,34 @@ export default function PemohonDashboard() {
     router.push("/login");
   };
 
-  // Handle files conversion to base64
-  const handleFiles = (fileList: FileList | null) => {
-    if (!fileList) return;
-    const newFiles = Array.from(fileList);
+  // Compress selected photos in the browser, then keep them as data URLs
+  const handleFiles = async (input: HTMLInputElement) => {
+    const files = Array.from(input.files || []);
+    input.value = ""; // allow picking the same file again
+    if (files.length === 0) return;
 
-    newFiles.forEach((file) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        if (typeof reader.result === "string") {
-          setImages((prev) => [...prev, reader.result as string]);
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    const room = MAX_PHOTOS - images.length;
+    if (room <= 0) {
+      setErrorMessage(`Maksimal ${MAX_PHOTOS} foto per laporan.`);
+      return;
+    }
+
+    setErrorMessage("");
+    setProcessingImages(true);
+    const errors: string[] = [];
+    if (files.length > room) errors.push(`Maksimal ${MAX_PHOTOS} foto per laporan, ${files.length - room} foto diabaikan.`);
+
+    for (const file of files.slice(0, room)) {
+      try {
+        const dataUrl = await compressImage(file);
+        setImages((prev) => [...prev, dataUrl]);
+      } catch (err) {
+        errors.push(err instanceof Error ? err.message : `Gagal memproses "${file.name}"`);
+      }
+    }
+
+    setProcessingImages(false);
+    if (errors.length) setErrorMessage(errors.join(" "));
   };
 
   const removeImage = (indexToRemove: number) => {
@@ -204,6 +225,24 @@ export default function PemohonDashboard() {
 
     setSubmitting(true);
     try {
+      // Upload photos one at a time (small requests), then send the report with their URLs.
+      const photoUrls: string[] = [];
+      for (let i = 0; i < images.length; i++) {
+        let url = uploadedRef.current.get(images[i]);
+        if (!url) {
+          setUploadProgress(`Mengunggah foto ${i + 1}/${images.length}...`);
+          try {
+            url = await uploadPhoto(images[i]);
+          } catch (err) {
+            setErrorMessage(`Foto ${i + 1}: ${err instanceof Error ? err.message : "Gagal mengunggah foto"}`);
+            return;
+          }
+          uploadedRef.current.set(images[i], url);
+        }
+        photoUrls.push(url);
+      }
+      setUploadProgress("");
+
       const res = await fetch("/api/laporan", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -213,7 +252,7 @@ export default function PemohonDashboard() {
           lokasi: lokasi.trim(),
           segmentasi: segmentasi.trim(),
           deskripsi: deskripsi.trim(),
-          attachments: images,
+          attachments: photoUrls,
         }),
       });
 
@@ -242,12 +281,14 @@ export default function PemohonDashboard() {
       setSegmentasi("");
       setDeskripsi("");
       setImages([]);
+      uploadedRef.current.clear();
 
       if (user) loadRiwayat(user.id);
     } catch {
       setErrorMessage("Terjadi kesalahan jaringan");
     } finally {
       setSubmitting(false);
+      setUploadProgress("");
     }
   };
 
@@ -628,7 +669,7 @@ export default function PemohonDashboard() {
                   capture="environment"
                   multiple
                   className="hidden"
-                  onChange={(e) => handleFiles(e.target.files)}
+                  onChange={(e) => handleFiles(e.target)}
                 />
                 <input
                   type="file"
@@ -636,7 +677,7 @@ export default function PemohonDashboard() {
                   accept="image/*"
                   multiple
                   className="hidden"
-                  onChange={(e) => handleFiles(e.target.files)}
+                  onChange={(e) => handleFiles(e.target)}
                 />
 
                 {/* Action Buttons for Mobile */}
@@ -661,6 +702,10 @@ export default function PemohonDashboard() {
                     <span className="text-[10px] text-slate-400">Pilih dari hp</span>
                   </button>
                 </div>
+
+                {processingImages && (
+                  <p className="mt-2 text-[11px] font-semibold text-blue-500">Memproses foto...</p>
+                )}
 
                 {/* Image Previews */}
                 {images.length > 0 && (
@@ -712,11 +757,11 @@ export default function PemohonDashboard() {
               {/* Submit Button */}
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || processingImages}
                 className="w-full py-3 px-4 rounded-xl bg-[#0084FF] hover:bg-blue-600 text-white text-xs font-bold shadow-md shadow-blue-500/20 flex items-center justify-center gap-2 transition disabled:opacity-50"
               >
                 {submitting ? (
-                  <span>Mengirim Laporan...</span>
+                  <span>{uploadProgress || "Mengirim Laporan..."}</span>
                 ) : (
                   <>
                     <Send className="w-4 h-4" />

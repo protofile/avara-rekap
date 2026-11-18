@@ -78,16 +78,6 @@ export default function LoginPage() {
     }
   };
 
-  const handleQuickLogin = (userType: "admin" | "pemohon") => {
-    if (userType === "admin") {
-      setUsername("admin");
-      setPassword("admin123");
-    } else {
-      setUsername("sodik");
-      setPassword("sodik123");
-    }
-  };
-
   return (
     <div className="min-h-screen bg-[#F8FAFC] flex flex-col justify-center items-center p-4">
       {/* Container */}
@@ -110,8 +100,8 @@ export default function LoginPage() {
                 )}
               </div>
               <div>
-                <span className="font-extrabold text-2xl tracking-widest block leading-tight">AVARA</span>
-                <span className="text-[11px] text-blue-100 font-medium tracking-wide">Monitoring System</span>
+                <span className="font-extrabold text-2xl tracking-widest block leading-tight">SOFA</span>
+                <span className="text-[11px] text-blue-100 font-medium tracking-wide">Summary Of Follow-up Action</span>
               </div>
             </div>
 
@@ -216,35 +206,6 @@ export default function LoginPage() {
             </button>
           </form>
 
-          {/* Quick Demo Login Switcher */}
-          <div className="mt-8 pt-6 border-t border-slate-100">
-            <p className="text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-2.5 text-center">
-              Akses Cepat Demo Akun
-            </p>
-            <div className="grid grid-cols-2 gap-2.5">
-              <button
-                type="button"
-                onClick={() => handleQuickLogin("admin")}
-                className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-blue-50 hover:border-blue-200 text-left transition group"
-              >
-                <div className="text-xs font-bold text-slate-800 group-hover:text-blue-600">
-                  Admin (Dedy)
-                </div>
-                <div className="text-[10px] text-slate-400 mt-0.5">admin / admin123</div>
-              </button>
-
-              <button
-                type="button"
-                onClick={() => handleQuickLogin("pemohon")}
-                className="p-2.5 rounded-xl border border-slate-200 bg-slate-50/70 hover:bg-blue-50 hover:border-blue-200 text-left transition group"
-              >
-                <div className="text-xs font-bold text-slate-800 group-hover:text-blue-600">
-                  Pemohon (Sodik)
-                </div>
-                <div className="text-[10px] text-slate-400 mt-0.5">sodik / sodik123</div>
-              </button>
-            </div>
-          </div>
         </div>
       </div>
     </div>
