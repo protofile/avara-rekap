@@ -27,14 +27,22 @@ yarn-error.log*
 
 # local env files
 .env*.local
+.env
 
 # vercel
 .vercel
 
-# sqlite
-*.db-shm
-*.db-wal
+# local data (old SQLite file)
+/data/
 
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# cPanel deploy packages
+/dist/
+
+# Local docs, not pushed
+/CLAUDE.md
+/DEPLOY.md
+__pycache__/

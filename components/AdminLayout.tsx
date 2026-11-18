@@ -165,22 +165,16 @@ export default function AdminLayout({
           }`}
         >
           <Link href="/dashboard" className="flex items-center gap-3 overflow-hidden">
-            <div className="w-10 h-10 rounded-xl bg-[#0084FF] text-white font-black flex items-center justify-center text-xl shadow-sm flex-shrink-0">
-              {settingsData?.logo_url ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={settingsData.logo_url}
-                  alt="Avara Logo"
-                  className="w-full h-full object-contain rounded-xl p-1"
-                />
-              ) : (
-                "A"
-              )}
+            <div className="w-10 h-10 rounded-xl bg-white border border-slate-100 flex items-center justify-center shadow-sm flex-shrink-0 overflow-hidden">
+              {/* Logo from Pengaturan Portal if set, otherwise the bundled Avara logo. */}
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={settingsData?.logo_url || "/logo-square.png"} alt="Avara Logo" className="w-full h-full object-contain p-1" />
             </div>
             {!collapsed && (
-              <span className="font-extrabold text-xl tracking-wider text-slate-900 truncate">
-                {settingsData?.app_name || "AVARA"}
-              </span>
+              <div className="min-w-0">
+                <span className="font-extrabold text-xl tracking-widest text-slate-900 block leading-tight">SOFA</span>
+                <span className="text-[10px] text-slate-400 font-medium tracking-wide block truncate">Summary Of Follow-up Action</span>
+              </div>
             )}
           </Link>
         </div>

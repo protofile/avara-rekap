@@ -1,6 +1,6 @@
 # AVARA - Sistem Rekap & Laporan Teknisi
 
-Aplikasi web modern untuk manajemen rekapitulasi, monitoring, dan verifikasi laporan pekerjaan teknisi lapangan pada perusahaan **AVARA**. Dibangun dengan **Next.js (App Router)**, **SQLite** (`better-sqlite3`), dan **Tailwind CSS** dengan desain antarmuka presisi tinggi sesuai *design mockup*.
+Aplikasi web modern untuk manajemen rekapitulasi, monitoring, dan verifikasi laporan pekerjaan teknisi lapangan pada perusahaan **AVARA**. Dibangun dengan **Next.js (App Router)**, **MySQL/MariaDB** (`mysql2`), dan **Tailwind CSS** dengan desain antarmuka presisi tinggi sesuai *design mockup*.
 
 ---
 
@@ -9,7 +9,6 @@ Aplikasi web modern untuk manajemen rekapitulasi, monitoring, dan verifikasi lap
 ### 1. Otentikasi & Login (`/login`)
 - **Login Multi-Role**: Mengarahkan Admin ke Dashboard Monitoring dan Pemohon/Teknisi ke Dashboard Mobile.
 - **Teks Sambutan & Quote Dinamis**: Teks "Selamat Datang" dan Quote inspiratif yang dapat diatur oleh Admin.
-- **Demo Quick Login**: Tombol akses cepat satu-klik untuk login sebagai Admin (`admin`) atau Teknisi (`sodik`).
 
 ### 2. Dashboard Monitoring Admin (`/dashboard`)
 - **Sticky / Fixed Header**: Header tetap berada di bagian atas saat halaman di-scroll dengan efek *backdrop blur*.
@@ -64,14 +63,11 @@ Aplikasi web modern untuk manajemen rekapitulasi, monitoring, dan verifikasi lap
 
 ---
 
-## 🔑 Kredensial Akun Pengujian (Demo)
+## 🔑 Akun
 
-| Peran | Username | Password | Deskripsi |
-| :--- | :--- | :--- | :--- |
-| **Admin** | `admin` | `admin123` | Akses penuh dashboard monitoring admin |
-| **Teknisi 1** | `sodik` | `sodik123` | Teknisi Divisi Fiber Optic |
-| **Teknisi 2** | `yusuf` | `yusuf123` | Teknisi Divisi Fiber Optic |
-| **Teknisi 3** | `sanari` | `sanari123` | Teknisi Divisi Radio Wireless |
+- Akun admin pertama dibuat otomatis dari variabel `ADMIN_USERNAME` / `ADMIN_PASSWORD` saat aplikasi pertama kali dijalankan (hanya jika belum ada admin).
+- Akun teknisi dibuat oleh admin di halaman **Akun Pemohon**.
+- Untuk pengembangan lokal, `SEED_DEMO=true` membuat akun demo (`sodik/sodik123`, `yusuf/yusuf123`, `sanari/sanari123`) dan contoh laporan. **Jangan aktifkan di produksi.**
 
 ---
 
@@ -89,7 +85,10 @@ cd rekap-avara
 # 2. Instalasi dependensi (jika belum terinstal)
 npm install
 
-# 3. Mode Produksi (Cepat & Stabil)
+# 3. Salin .env.example ke .env.local lalu isi koneksi database
+cp .env.example .env.local
+
+# 4. Mode Produksi (Cepat & Stabil)
 npm run build
 npm run start
 
@@ -102,5 +101,6 @@ Buka peramban di: **`http://localhost:3000`**
 ---
 
 ## 🗄️ Database & Penyimpanan
-- Menggunakan database **SQLite** berkas lokal yang disimpan di `data/avara.db`.
-- Database diinisialisasi dan di-*seed* secara otomatis saat aplikasi pertama kali dijalankan.
+- Menggunakan **MySQL / MariaDB** (`mysql2`). Konfigurasi koneksi lewat variabel lingkungan, lihat `.env.example` (salin ke `.env.local` untuk lokal).
+- Tabel dibuat otomatis saat aplikasi pertama kali terhubung ke database kosong.
+- Password disimpan dalam bentuk hash (bcrypt).

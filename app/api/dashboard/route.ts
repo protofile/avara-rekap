@@ -1,67 +1,37 @@
 import { NextResponse } from "next/server";
-import db from "@/lib/db";
+import { queryOne } from "@/lib/db";
+import { requireAdmin, serverError } from "@/lib/auth";
 
 export const dynamic = "force-dynamic";
 
+const SELESAI = "(l.status = 'Selesai' OR l.is_verified = 1)";
+
+async function stats(kategoriName?: string) {
+  const row = await queryOne<{ total: number; selesai: number | string | null }>(
+    `SELECT COUNT(*) AS total, SUM(CASE WHEN ${SELESAI} THEN 1 ELSE 0 END) AS selesai
+     FROM laporan l
+     JOIN kategori k ON l.kategori_id = k.id
+     ${kategoriName ? "WHERE k.name = ?" : ""}`,
+    kategoriName ? [kategoriName] : []
+  );
+  const total = Number(row?.total || 0);
+  const selesai = Number(row?.selesai || 0);
+  return { total, proses: total - selesai, selesai };
+}
+
 export async function GET() {
   try {
-    // 1. Tindak Lanjut stats
-    const tindakLanjutTotal = (db.prepare(`
-      SELECT COUNT(*) as count 
-      FROM laporan l
-      JOIN kategori k ON l.kategori_id = k.id
-      WHERE k.name = 'Tindak Lanjut'
-    `).get() as { count: number }).count;
+    const { error } = await requireAdmin();
+    if (error) return error;
 
-    const tindakLanjutSelesai = (db.prepare(`
-      SELECT COUNT(*) as count 
-      FROM laporan l
-      JOIN kategori k ON l.kategori_id = k.id
-      WHERE k.name = 'Tindak Lanjut' AND (l.status = 'Selesai' OR l.is_verified = 1)
-    `).get() as { count: number }).count;
+    const [tindakLanjut, nonProject, overall] = await Promise.all([
+      stats("Tindak Lanjut"),
+      stats("PM Non Project"),
+      stats(),
+    ]);
 
-    const tindakLanjutProses = tindakLanjutTotal - tindakLanjutSelesai;
-
-    // 2. Non Project stats (PM Non Project)
-    const nonProjectTotal = (db.prepare(`
-      SELECT COUNT(*) as count 
-      FROM laporan l
-      JOIN kategori k ON l.kategori_id = k.id
-      WHERE k.name = 'PM Non Project'
-    `).get() as { count: number }).count;
-
-    const nonProjectSelesai = (db.prepare(`
-      SELECT COUNT(*) as count 
-      FROM laporan l
-      JOIN kategori k ON l.kategori_id = k.id
-      WHERE k.name = 'PM Non Project' AND (l.status = 'Selesai' OR l.is_verified = 1)
-    `).get() as { count: number }).count;
-
-    const nonProjectProses = nonProjectTotal - nonProjectSelesai;
-
-    // Overall Selesai & Total
-    const totalSemua = (db.prepare("SELECT COUNT(*) as count FROM laporan").get() as { count: number }).count;
-    const totalSelesai = (db.prepare("SELECT COUNT(*) as count FROM laporan WHERE status = 'Selesai' OR is_verified = 1").get() as { count: number }).count;
-    const totalProses = totalSemua - totalSelesai;
-
-    return NextResponse.json({
-      tindakLanjut: {
-        total: tindakLanjutTotal,
-        proses: tindakLanjutProses,
-        selesai: tindakLanjutSelesai,
-      },
-      nonProject: {
-        total: nonProjectTotal,
-        proses: nonProjectProses,
-        selesai: nonProjectSelesai,
-      },
-      overall: {
-        total: totalSemua,
-        proses: totalProses,
-        selesai: totalSelesai,
-      },
-    });
-  } catch (error: any) {
-    return NextResponse.json({ error: error.message }, { status: 500 });
+    return NextResponse.json({ tindakLanjut, nonProject, overall });
+  } catch (error) {
+    return serverError(error);
   }
 }
